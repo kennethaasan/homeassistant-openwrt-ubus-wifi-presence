@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from datetime import timedelta
 
 from custom_components.openwrt_ubus.api import (
@@ -30,6 +31,7 @@ from custom_components.openwrt_ubus.data import (
     TrackerTargetSource,
     TrackerTargetType,
     WifiPresenceDevice,
+    association_preference,
 )
 from custom_components.openwrt_ubus.utils.alias_mapping import AliasMappingEntry, AliasMappingLoader
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -174,13 +176,40 @@ class OpenWrtUbusWifiPresenceCoordinator(DataUpdateCoordinator[dict[str, WifiPre
                 if mac is None:
                     continue
 
-                devices[mac] = WifiPresenceDevice(
+                candidate = WifiPresenceDevice(
                     mac=mac,
                     ap_device=ap_device,
                     ssid=normalized_ssid,
+                    signal_dbm=self._integer_or_none(station.get("signal")),
+                    signal_average_dbm=self._integer_or_none(station.get("signal_avg")),
+                    noise_dbm=self._integer_or_none(station.get("noise")),
+                    inactive_ms=self._integer_or_none(station.get("inactive")),
+                    connected_time_seconds=self._integer_or_none(station.get("connected_time")),
+                    rx_rate_mbps=self._rate_mbps(station.get("rx")),
+                    tx_rate_mbps=self._rate_mbps(station.get("tx")),
                 )
+                current = devices.get(mac)
+                if current is None or association_preference(candidate) < association_preference(current):
+                    devices[mac] = candidate
 
         return devices, known_ssids, inventory_complete
+
+    @staticmethod
+    def _integer_or_none(value: object) -> int | None:
+        """Return an integer metric only for valid iwinfo numeric values."""
+        if isinstance(value, bool) or not isinstance(value, int | float):
+            return None
+        return int(value)
+
+    @classmethod
+    def _rate_mbps(cls, value: object) -> float | None:
+        """Convert an iwinfo nested kbit/s rate to Mbit/s."""
+        if not isinstance(value, Mapping):
+            return None
+        rate_kbps = cls._integer_or_none(value.get("rate"))
+        if rate_kbps is None or rate_kbps < 0:
+            return None
+        return round(rate_kbps / 1000, 1)
 
     def _build_known_macs(self) -> dict[str, str | None]:
         """Build MAC->friendly name map from Home Assistant device registry."""

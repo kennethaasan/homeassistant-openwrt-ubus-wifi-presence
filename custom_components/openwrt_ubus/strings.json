@@ -88,5 +88,26 @@
         }
       }
     }
+  },
+  "entity": {
+    "binary_sensor": {
+      "router_connectivity": {
+        "name": "Connectivity"
+      },
+      "wifi_ssid_presence": {
+        "name": "WiFi {ssid} presence"
+      }
+    },
+    "sensor": {
+      "associated_clients": {
+        "name": "Associated clients"
+      },
+      "average_station_signal": {
+        "name": "Average station signal"
+      },
+      "weakest_station_signal": {
+        "name": "Weakest station signal"
+      }
+    }
   }
 }

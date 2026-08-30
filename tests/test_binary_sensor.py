@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 from logging import getLogger
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 import pytest
@@ -11,7 +12,8 @@ from custom_components.openwrt_ubus.binary_sensor import (
     OpenWrtUbusSsidPresenceBinarySensor,
     OpenWrtUbusSsidPresenceManager,
 )
-from custom_components.openwrt_ubus.const import DOMAIN
+from custom_components.openwrt_ubus.binary_sensor.router_connectivity import OpenWrtUbusRouterConnectivityBinarySensor
+from custom_components.openwrt_ubus.const import CONF_HOST, DOMAIN
 from custom_components.openwrt_ubus.coordinator import OpenWrtUbusWifiPresenceCoordinator
 from homeassistant.config_entries import ConfigEntryDisabler
 from homeassistant.helpers import entity_registry as er
@@ -90,6 +92,20 @@ def test_ssid_entity_uses_coordinator_updates_instead_of_entity_polling() -> Non
     entity = OpenWrtUbusSsidPresenceBinarySensor("Home WiFi")
 
     assert entity.should_poll is False
+
+
+@pytest.mark.unit
+def test_router_connectivity_remains_available_during_failed_update() -> None:
+    """Test a failed update is visible as disconnected instead of unavailable."""
+    entry = MockConfigEntry(domain=DOMAIN, data={CONF_HOST: "router-office.lan"})
+    coordinator = MagicMock(spec=OpenWrtUbusWifiPresenceCoordinator)
+    coordinator.last_update_success = False
+    entry.runtime_data = SimpleNamespace(coordinator=coordinator)
+
+    entity = OpenWrtUbusRouterConnectivityBinarySensor(entry)
+
+    assert entity.available is True
+    assert entity.is_on is False
 
 
 @pytest.mark.unit

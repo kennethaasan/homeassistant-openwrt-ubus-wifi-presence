@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping
 from hashlib import sha1
 
+from custom_components.openwrt_ubus.binary_sensor.router_connectivity import OpenWrtUbusRouterConnectivityBinarySensor
 from custom_components.openwrt_ubus.const import DOMAIN
 from custom_components.openwrt_ubus.coordinator import OpenWrtUbusWifiPresenceCoordinator
 from custom_components.openwrt_ubus.data import OpenWrtUbusWifiPresenceConfigEntry, WifiPresenceDevice
@@ -40,7 +41,8 @@ class OpenWrtUbusSsidPresenceBinarySensor(BinarySensorEntity):
         """Initialize the WiFi SSID presence sensor."""
         self._ssid = ssid
         slug = slugify(ssid, separator="_")
-        self._attr_name = f"WiFi {ssid} Presence"
+        self._attr_translation_key = "wifi_ssid_presence"
+        self._attr_translation_placeholders = {"ssid": ssid}
         self._attr_unique_id = _ssid_unique_id(ssid)
         self._attr_suggested_object_id = f"openwrt_wifi_{slug}_presence"
 
@@ -281,6 +283,8 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up global WiFi SSID presence binary sensors."""
+    async_add_entities([OpenWrtUbusRouterConnectivityBinarySensor(entry)])
+
     manager = _get_manager(hass)
     if manager is None:
         manager = OpenWrtUbusSsidPresenceManager(hass)
