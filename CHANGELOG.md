@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.4](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/compare/v0.5.3...v0.5.4) (2026-08-30)
+
+
+### Bug Fixes
+
+* register one global tracker per target ([#4](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/issues/4)) ([1b655ed](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/commit/1b655ede92bd646b83769107f811b6760d349ab6))
+
 ## [0.5.3](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/compare/v0.5.2...v0.5.3) (2026-08-30)
 
 
