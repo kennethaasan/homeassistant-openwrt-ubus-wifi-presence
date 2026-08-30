@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/compare/v0.5.2...v0.5.3) (2026-08-30)
+
+
+### Features
+
+* add mesh radio diagnostics ([0116118](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/commit/011611816557353b22d3b3bca82bafe9cee5198b))
+
 ## [0.5.2](https://github.com/zewelor/homeassistant-openwrt-ubus-wifi-presence/compare/v0.5.1...v0.5.2) (2026-07-26)
 
 
