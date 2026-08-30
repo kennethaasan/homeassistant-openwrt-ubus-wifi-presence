@@ -8,6 +8,7 @@ from custom_components.openwrt_ubus.data import (
     TrackerTarget,
     TrackerTargetType,
     WifiPresenceDevice,
+    association_preference,
 )
 from custom_components.openwrt_ubus.entity import OpenWrtUbusWifiPresenceEntity
 from homeassistant.components.device_tracker.const import SourceType
@@ -75,12 +76,11 @@ class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenc
         if mac is None:
             return None, None
 
-        # Check local coordinator first
+        candidates: list[tuple[WifiPresenceDevice, str]] = []
         device = self.coordinator.data.get(mac)
         if device:
-            return device, self._host
+            candidates.append((device, self._host))
 
-        # Check all other OpenWrt coordinators
         for entry in self.hass.config_entries.async_entries(DOMAIN):
             if entry.state != ConfigEntryState.LOADED:
                 continue
@@ -97,7 +97,15 @@ class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenc
             device = coordinator.data.get(mac)
             if device:
                 host = entry.data.get(CONF_HOST, "unknown")
-                return device, host
+                candidates.append((device, host))
+
+        if candidates:
+            # Mesh roaming can leave one short-lived duplicate association. Prefer
+            # the station with the least inactivity, then the strongest signal.
+            return min(
+                candidates,
+                key=lambda candidate: association_preference(candidate[0]),
+            )
 
         return None, None
 
@@ -127,7 +135,7 @@ class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenc
         return self._resolved_mac
 
     @property
-    def extra_state_attributes(self) -> dict[str, str | bool | None]:
+    def extra_state_attributes(self) -> dict[str, str | bool | int | float | None]:
         """Return auxiliary metadata for troubleshooting and UI context."""
         device, router = self._find_device_global()
         target = self._target
@@ -135,6 +143,8 @@ class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenc
         target_source = target.source.value if target else None
         mapped_mac = target.mac if target else self._fallback_mac
 
+        signal_dbm = device.signal_dbm if device else None
+        noise_dbm = device.noise_dbm if device else None
         return {
             "router": router or self._host,
             "entity_key": self._entity_key,
@@ -144,4 +154,12 @@ class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenc
             "mapping_exists": target is not None,
             "ssid": device.ssid if device else None,
             "ap_device": device.ap_device if device else None,
+            "signal_dbm": signal_dbm,
+            "signal_average_dbm": device.signal_average_dbm if device else None,
+            "noise_dbm": noise_dbm,
+            "snr_db": signal_dbm - noise_dbm if signal_dbm is not None and noise_dbm is not None else None,
+            "inactive_ms": device.inactive_ms if device else None,
+            "connected_time_seconds": device.connected_time_seconds if device else None,
+            "rx_rate_mbps": device.rx_rate_mbps if device else None,
+            "tx_rate_mbps": device.tx_rate_mbps if device else None,
         }

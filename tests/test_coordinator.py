@@ -86,6 +86,12 @@ async def test_coordinator_filters_unauthorized_stations(hass, inventory_complet
         {
             "mac": "11:22:33:44:55:66",
             "signal": -50,
+            "signal_avg": -52,
+            "noise": -95,
+            "inactive": 70,
+            "connected_time": 3600,
+            "rx": {"rate": 866700},
+            "tx": {"rate": 144400},
             "authorized": True,
         },
         {
@@ -101,8 +107,43 @@ async def test_coordinator_filters_unauthorized_stations(hass, inventory_complet
 
     assert "11:22:33:44:55:66" in devices
     assert "AA:BB:CC:DD:EE:FF" not in devices
+    station = devices["11:22:33:44:55:66"]
+    assert station.signal_dbm == -50
+    assert station.signal_average_dbm == -52
+    assert station.noise_dbm == -95
+    assert station.inactive_ms == 70
+    assert station.connected_time_seconds == 3600
+    assert station.rx_rate_mbps == 866.7
+    assert station.tx_rate_mbps == 144.4
     assert coordinator.known_ssids == {"HomeWiFi", "DisabledWiFi"}
     assert coordinator.ssid_inventory_complete is inventory_complete
+
+
+@pytest.mark.unit
+async def test_coordinator_prefers_fresh_duplicate_radio_association(hass) -> None:
+    """Test one router reporting a roaming station on two radios."""
+    client = AsyncMock()
+    client.normalize_mac = OpenWrtUbusClient.normalize_mac
+    client.get_wifi_ssid_inventory.return_value = (
+        {"phy0-ap0": "HomeWiFi", "phy1-ap0": "HomeWiFi"},
+        {"HomeWiFi"},
+        True,
+    )
+    client.get_iwinfo_ap_devices.return_value = ["phy0-ap0", "phy1-ap0"]
+    client.get_iwinfo_assoclist.side_effect = [
+        [{"mac": "11:22:33:44:55:66", "signal": -44, "inactive": 800}],
+        [{"mac": "11:22:33:44:55:66", "signal": -62, "inactive": 20}],
+    ]
+
+    coordinator = OpenWrtUbusWifiPresenceCoordinator(
+        hass=hass,
+        entry=_fallback_test_entry(),
+        client=client,
+    )
+    devices = await coordinator._async_update_data()  # noqa: SLF001
+
+    assert devices["11:22:33:44:55:66"].ap_device == "phy1-ap0"
+    assert devices["11:22:33:44:55:66"].inactive_ms == 20
 
 
 def _fallback_test_entry() -> MockConfigEntry:

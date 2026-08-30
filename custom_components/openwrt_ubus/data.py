@@ -20,6 +20,20 @@ class WifiPresenceDevice:
     mac: str
     ap_device: str
     ssid: str | None
+    signal_dbm: int | None = None
+    signal_average_dbm: int | None = None
+    noise_dbm: int | None = None
+    inactive_ms: int | None = None
+    connected_time_seconds: int | None = None
+    rx_rate_mbps: float | None = None
+    tx_rate_mbps: float | None = None
+
+
+def association_preference(device: WifiPresenceDevice) -> tuple[int, int]:
+    """Return a stable sort key that prefers a fresh, strong association."""
+    inactive_ms = device.inactive_ms if device.inactive_ms is not None else 2**31
+    signal_dbm = device.signal_dbm if device.signal_dbm is not None else -999
+    return inactive_ms, -signal_dbm
 
 
 class TrackerTargetType(StrEnum):

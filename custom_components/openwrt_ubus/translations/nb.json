@@ -1,0 +1,113 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "OpenWrt Ubus WiFi-tilstedeværelse",
+        "description": "Konfigurer tilkoblingen til OpenWrt ubus-API-et.",
+        "data": {
+          "host": "Ruterens vertsnavn",
+          "ip_address": "Ruterens IP-adresse",
+          "use_https": "Bruk HTTPS",
+          "port": "Port",
+          "verify_ssl": "Kontroller SSL-sertifikatet",
+          "endpoint": "Ubus-endepunkt",
+          "username": "Brukernavn",
+          "password": "Passord",
+          "tracking_mode": "Sporingsmodus",
+          "alias_mapping_file": "Fil med aliaser",
+          "mapping_source": "Kilde for aliaser",
+          "alias_mapping_ui": "Aliaser (YAML i brukergrensesnittet)",
+          "scan_interval": "Skanneintervall (sekunder)"
+        },
+        "data_description": {
+          "tracking_mode": "known_or_alias sporer bare aliaser og enheter Home Assistant kjenner. all sporer alle observerte WiFi-klienter, mens aliaser fortsatt prioriteres.",
+          "alias_mapping_file": "Sti til en YAML-fil i Home Assistant-konfigurasjonsmappen, med mindre du bruker en absolutt sti. Standard: openwrt_ubus_aliases.yaml.",
+          "mapping_source": "file leser bare YAML-filen. ui leser bare YAML-teksten nedenfor. hybrid slår sammen begge kildene, og aliaser fra filen overstyrer UI-aliaser med samme navn.",
+          "alias_mapping_ui": "Valgfri YAML med ett vennlig alias og én MAC-adresse per linje. Eksempel: phone_office: \"AA:BB:CC:DD:EE:FF\".",
+          "scan_interval": "Hvor ofte OpenWrt skal spørres om tilkoblede WiFi-klienter."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Logg inn på OpenWrt Ubus WiFi-tilstedeværelse på nytt",
+        "description": "Oppdater påloggingsinformasjonen for OpenWrt-ruteren på {host}.",
+        "data": {
+          "username": "Brukernavn",
+          "password": "Passord"
+        }
+      },
+      "reconfigure": {
+        "title": "Konfigurer OpenWrt Ubus WiFi-tilstedeværelse på nytt",
+        "description": "Oppdater tilkoblingsinnstillingene (vertsnavnet forblir uendret).",
+        "data": {
+          "ip_address": "Ruterens IP-adresse",
+          "use_https": "Bruk HTTPS",
+          "port": "Port",
+          "verify_ssl": "Kontroller SSL-sertifikatet",
+          "endpoint": "Ubus-endepunkt",
+          "username": "Brukernavn",
+          "password": "Passord"
+        },
+        "data_description": {
+          "ip_address": "Valgfri overstyring for den faktiske tilkoblingen. La feltet stå tomt for å fortsette å bruke det konfigurerte vertsnavnet.",
+          "verify_ssl": "Deaktiver bare når ruteren bruker et selvsignert eller på annen måte uklarert sertifikat.",
+          "endpoint": "Relativ ubus-sti. Standardverdien i OpenWrt er `ubus`."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Kan ikke koble til",
+      "invalid_auth": "Ugyldig påloggingsinformasjon",
+      "invalid_alias_mapping_ui": "Ugyldig aliasoppsett i YAML",
+      "unknown": "Uventet feil"
+    },
+    "abort": {
+      "already_configured": "Denne OpenWrt-verten er allerede konfigurert",
+      "reauth_successful": "Ny innlogging var vellykket",
+      "reconfigure_successful": "Ny konfigurasjon var vellykket",
+      "entry_not_found": "Fant ikke konfigurasjonsoppføringen"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Alternativer for OpenWrt Ubus WiFi-tilstedeværelse",
+        "description": "Oppdater innstillinger for sporing og polling.",
+        "data": {
+          "tracking_mode": "Sporingsmodus",
+          "alias_mapping_file": "Fil med aliaser",
+          "mapping_source": "Kilde for aliaser",
+          "alias_mapping_ui": "Aliaser (YAML i brukergrensesnittet)",
+          "scan_interval": "Skanneintervall (sekunder)"
+        },
+        "data_description": {
+          "tracking_mode": "known_or_alias sporer bare aliaser og enheter Home Assistant kjenner. all sporer alle observerte WiFi-klienter, mens aliaser fortsatt prioriteres.",
+          "alias_mapping_file": "Sti til en YAML-fil i Home Assistant-konfigurasjonsmappen, med mindre du bruker en absolutt sti. Standard: openwrt_ubus_aliases.yaml.",
+          "mapping_source": "file leser bare YAML-filen. ui leser bare YAML-teksten nedenfor. hybrid slår sammen begge kildene, og aliaser fra filen overstyrer UI-aliaser med samme navn.",
+          "alias_mapping_ui": "Valgfri YAML med ett vennlig alias og én MAC-adresse per linje. Eksempel: phone_office: \"AA:BB:CC:DD:EE:FF\".",
+          "scan_interval": "Hvor ofte OpenWrt skal spørres om tilkoblede WiFi-klienter."
+        }
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "router_connectivity": {
+        "name": "Tilkobling"
+      },
+      "wifi_ssid_presence": {
+        "name": "WiFi {ssid} tilstedeværelse"
+      }
+    },
+    "sensor": {
+      "associated_clients": {
+        "name": "Tilkoblede klienter"
+      },
+      "average_station_signal": {
+        "name": "Gjennomsnittlig klientsignal"
+      },
+      "weakest_station_signal": {
+        "name": "Svakeste klientsignal"
+      }
+    }
+  }
+}

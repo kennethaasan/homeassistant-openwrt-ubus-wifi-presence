@@ -1,11 +1,13 @@
 # OpenWrt Ubus WiFi Presence
 
-> Fork notice: This project is a focused fork of
-> [FUjr/homeassistant-openwrt-ubus](https://github.com/FUjr/homeassistant-openwrt-ubus)
-> and keeps only WiFi presence tracking via ubus.
+> Fork notice: This project continues
+> [zewelor/homeassistant-openwrt-ubus-wifi-presence](https://github.com/zewelor/homeassistant-openwrt-ubus-wifi-presence),
+> which is a focused fork of
+> [FUjr/homeassistant-openwrt-ubus](https://github.com/FUjr/homeassistant-openwrt-ubus).
 
 Home Assistant custom integration for tracking wireless clients connected to
-OpenWrt. It provides per-device trackers and aggregated WiFi SSID presence sensors.
+OpenWrt. It provides per-device trackers, mesh roaming diagnostics, router
+health metrics, and aggregated WiFi SSID presence sensors.
 
 ## Migrating existing installations
 
@@ -36,9 +38,10 @@ Included:
 
 - per-device `device_tracker` entities with `home` / `not_home` state
 - global `binary_sensor` entities showing whether a WiFi SSID has connected clients
+- per-router connectivity, client-count, and station-signal entities
 - wireless clients reported by `iwinfo`
 - multiple OpenWrt routers and access points
-- router, WiFi SSID, and AP-interface metadata
+- router, WiFi SSID, AP-interface, radio signal, and link-rate metadata
 
 Not included:
 
@@ -134,16 +137,29 @@ the MAC is absent from all current association datasets.
 
 Each tracker exposes:
 
-| Attribute        | Description                                  | Example                    |
-| ---------------- | -------------------------------------------- | -------------------------- |
-| `router`         | OpenWrt host currently reporting the client  | `router-office.lan`        |
-| `ssid`           | WiFi SSID name, when available               | `MyNetwork_5G`             |
-| `ap_device`      | OpenWrt wireless interface                   | `phy0-ap0`                 |
-| `mapped_mac`     | MAC followed by the tracker                  | `11:22:33:44:55:66`        |
-| `mapping_exists` | Whether the current target definition exists | `true`                     |
-| `tracker_type`   | `alias` or `mac`                             | `alias`                    |
-| `target_source`  | `alias`, `known`, or `all`                   | `alias`                    |
-| `entity_key`     | Internal stable target key                   | `alias_living_room_sensor` |
+| Attribute                | Description                                   | Example                    |
+| ------------------------ | --------------------------------------------- | -------------------------- |
+| `router`                 | OpenWrt host currently reporting the client   | `router-office.lan`        |
+| `ssid`                   | WiFi SSID name, when available                | `MyNetwork_5G`             |
+| `ap_device`              | OpenWrt wireless interface                    | `phy0-ap0`                 |
+| `mapped_mac`             | MAC followed by the tracker                   | `11:22:33:44:55:66`        |
+| `mapping_exists`         | Whether the current target definition exists  | `true`                     |
+| `tracker_type`           | `alias` or `mac`                              | `alias`                    |
+| `target_source`          | `alias`, `known`, or `all`                    | `alias`                    |
+| `entity_key`             | Internal stable target key                    | `alias_living_room_sensor` |
+| `signal_dbm`             | Current received signal strength              | `-58`                      |
+| `signal_average_dbm`     | Driver-reported average signal strength       | `-60`                      |
+| `noise_dbm`              | Driver-reported noise floor                   | `-95`                      |
+| `snr_db`                 | Signal-to-noise ratio                         | `37`                       |
+| `inactive_ms`            | Time since the station last transmitted       | `30`                       |
+| `connected_time_seconds` | Time associated with the current access point | `7200`                     |
+| `rx_rate_mbps`           | Current receive link rate                     | `432.1`                    |
+| `tx_rate_mbps`           | Current transmit link rate                    | `144.4`                    |
+
+When a roaming client is briefly reported by two mesh access points, the
+tracker selects the freshest association first and then the strongest signal.
+This avoids a stale association making a device appear attached to the wrong
+router.
 
 The integration's runtime station data comes directly from
 `iwinfo.assoclist`. It does not provide DHCP hostname or IP-address properties.
@@ -168,7 +184,28 @@ mapping_exists: true
 tracker_type: alias
 target_source: alias
 entity_key: alias_living_room_sensor
+signal_dbm: -58
+noise_dbm: -95
+snr_db: 37
+inactive_ms: 30
+rx_rate_mbps: 432.1
+tx_rate_mbps: 144.4
 ```
+
+## Router health entities
+
+Each OpenWrt config entry creates a router device with these diagnostic
+entities:
+
+- connectivity binary sensor, which remains visible and turns off after a
+  failed coordinator update
+- associated client count
+- average associated-station signal strength
+- weakest associated-station signal strength
+
+Signal entities are unknown when the router does not return signal readings.
+The integration includes English and Norwegian Bokmål entity and setup
+translations.
 
 ## WiFi SSID presence sensors
 

@@ -24,7 +24,7 @@ The user needs access to:
 ### HACS custom repository
 
 1. Open HACS -> Integrations -> Custom repositories.
-2. Add `https://github.com/zewelor/homeassistant-openwrt-ubus-wifi-presence`.
+2. Add `https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence`.
 3. Select category `Integration`.
 4. Install `OpenWrt Ubus WiFi Presence`.
 5. Restart Home Assistant.
@@ -128,4 +128,4 @@ logger:
 - Detailed options: [CONFIGURATION.md](./CONFIGURATION.md)
 - Runtime architecture: [ARCHITECTURE.md](../development/ARCHITECTURE.md)
 - Main documentation and migration notes: [README](../../README.md)
-- Issues: <https://github.com/zewelor/homeassistant-openwrt-ubus-wifi-presence/issues>
+- Issues: <https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/issues>
