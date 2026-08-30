@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from custom_components.openwrt_ubus.const import CONF_HOST, DOMAIN
+from typing import TYPE_CHECKING
+
+from custom_components.openwrt_ubus.const import CONF_HOST, DOMAIN, TRACKER_UNIQUE_ID_PREFIX
 from custom_components.openwrt_ubus.data import (
     OpenWrtUbusWifiPresenceConfigEntry,
     TrackerTarget,
@@ -16,6 +18,9 @@ from homeassistant.components.device_tracker.entity import ScannerEntity
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.util import slugify
 
+if TYPE_CHECKING:
+    from custom_components.openwrt_ubus.device_tracker import OpenWrtUbusWifiPresenceTrackerManager
+
 
 class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenceEntity):
     """Represents one WiFi client tracker target."""
@@ -27,19 +32,56 @@ class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenc
         coordinator,
         entry: OpenWrtUbusWifiPresenceConfigEntry,
         entity_key: str,
+        manager: OpenWrtUbusWifiPresenceTrackerManager | None = None,
     ) -> None:
         """Initialize tracker entity for one alias/MAC target."""
         super().__init__(coordinator)
+        self._manager = manager
+        self._owner_entry_id = entry.entry_id
         self._host = entry.data[CONF_HOST]
         self._entity_key = entity_key
         self._fallback_name = entity_key
         self._fallback_mac = self._extract_mac_from_entity_key(entity_key)
-        self._attr_unique_id = f"{self._host}_{self._entity_key}"
+        self._attr_unique_id = f"{TRACKER_UNIQUE_ID_PREFIX}{self._entity_key}"
         self._attr_suggested_object_id = self._build_suggested_object_id(entity_key)
         self._attr_entity_registry_enabled_default = True
 
+    async def async_added_to_hass(self) -> None:
+        """Register the entity after Home Assistant accepted it."""
+        await super().async_added_to_hass()
+        if self._manager is not None:
+            self._manager.async_entity_added(self)
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Unregister the entity when Home Assistant removes it."""
+        if self._manager is not None:
+            self._manager.async_entity_removed(self)
+        await super().async_will_remove_from_hass()
+
+    @property
+    def entity_key(self) -> str:
+        """Return the stable target key managed by the global platform."""
+        return self._entity_key
+
+    @property
+    def owner_entry_id(self) -> str:
+        """Return the config entry platform currently hosting this entity."""
+        return self._owner_entry_id
+
+    @property
+    def unique_id(self) -> str:
+        """Return an alias-stable ID instead of ScannerEntity's MAC-only ID."""
+        return f"{TRACKER_UNIQUE_ID_PREFIX}{self._entity_key}"
+
+    @property
+    def entity_registry_enabled_default(self) -> bool:
+        """Enable explicitly selected tracker targets by default."""
+        return True
+
     @property
     def _target(self) -> TrackerTarget | None:
+        if self._manager is not None:
+            return self._manager.tracker_targets.get(self._entity_key)
         return self.coordinator.tracker_targets.get(self._entity_key)
 
     @staticmethod
@@ -75,6 +117,9 @@ class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenc
         mac = self._resolved_mac
         if mac is None:
             return None, None
+
+        if self._manager is not None:
+            return self._manager.find_device(mac)
 
         candidates: list[tuple[WifiPresenceDevice, str]] = []
         device = self.coordinator.data.get(mac)
@@ -126,12 +171,7 @@ class OpenWrtUbusWifiPresenceDeviceTracker(ScannerEntity, OpenWrtUbusWifiPresenc
 
     @property
     def mac_address(self) -> str | None:
-        """Return MAC address for HA device_tracker entity merging.
-
-        When the same MAC is tracked on multiple OpenWrt routers,
-        returning the MAC allows HA to merge them into a single entity.
-        The entity shows home when connected to any router.
-        """
+        """Return the currently mapped network MAC address."""
         return self._resolved_mac
 
     @property

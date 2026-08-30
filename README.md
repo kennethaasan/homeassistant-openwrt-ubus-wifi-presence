@@ -161,6 +161,11 @@ tracker selects the freshest association first and then the strongest signal.
 This avoids a stale association making a device appear attached to the wrong
 router.
 
+Multiple OpenWrt config entries share one global tracker per target. Tracker
+ownership moves between loaded router entries when needed, while the stable
+entity ID and alias survive that handover. Existing MAC-based registry entries
+are migrated in place so dashboards and automations keep their entity IDs.
+
 The integration's runtime station data comes directly from
 `iwinfo.assoclist`. It does not provide DHCP hostname or IP-address properties.
 

@@ -32,6 +32,8 @@ DEFAULT_USE_HTTPS = False
 TRACKING_MODES: tuple[str, ...] = ("known_or_alias", "all")
 MAPPING_SOURCES: tuple[str, ...] = ("file", "ui", "hybrid")
 
+TRACKER_UNIQUE_ID_PREFIX = "openwrt_wifi_tracker_"
+
 MIN_SCAN_INTERVAL = 10
 MAX_SCAN_INTERVAL = 300
 
