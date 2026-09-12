@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.5](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/compare/v0.5.4...v0.5.5) (2026-09-12)
+
+
+### Bug Fixes
+
+* support read-only device registry collections ([#7](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/issues/7)) ([5d0dedc](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/commit/5d0dedc80dd636838c4c875d26ae9a1c38a8a67d))
+
 ## [0.5.4](https://github.com/kennethaasan/homeassistant-openwrt-ubus-wifi-presence/compare/v0.5.3...v0.5.4) (2026-08-30)
 
 
