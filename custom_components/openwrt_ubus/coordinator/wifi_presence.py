@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from datetime import timedelta
 
 from custom_components.openwrt_ubus.api import (
@@ -215,7 +215,9 @@ class OpenWrtUbusWifiPresenceCoordinator(DataUpdateCoordinator[dict[str, WifiPre
         """Build MAC->friendly name map from Home Assistant device registry."""
         registry = dr.async_get(self.hass)
         known_macs: dict[str, str | None] = {}
-        for device_entry in registry.devices.values():
+        devices = registry.devices
+        device_entries: Iterable[dr.DeviceEntry] = devices.values() if isinstance(devices, Mapping) else devices
+        for device_entry in device_entries:
             display_name = device_entry.name_by_user or device_entry.name
             for connection_type, connection_value in device_entry.connections:
                 if connection_type != dr.CONNECTION_NETWORK_MAC:
